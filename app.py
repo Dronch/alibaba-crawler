@@ -1,5 +1,4 @@
 import configparser
-
 from SeleniumTools import AlibabaSelenium
 
 if __name__ == '__main__':

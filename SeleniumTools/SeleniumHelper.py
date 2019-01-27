@@ -83,6 +83,14 @@ class SeleniumHelper:
 		except Exception as e:
 			raise Exception("Error loading element: {}".format(e))
 
+	def waitShowElementByXPath(self, xpath, wait=None):
+		try:
+			wait = self.WAIT if wait is None else wait
+			wait = WebDriverWait(self.driver, wait)
+			return wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+		except Exception as e:
+			raise Exception("Error loading element: {}".format(e))
+
 	def getElementFrom(self, fromObject, selector):
 		try:
 			return fromObject.find_element_by_css_selector(selector)
