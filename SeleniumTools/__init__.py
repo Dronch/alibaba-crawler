@@ -37,7 +37,7 @@ class AlibabaSelenium(SeleniumHelper):
                     try:
                         img_url = self.getAttribute(img, 'src').replace('_640x640xz.jpg', '')
                         img_data = requests.get(img_url).content
-                        filename = img_url.replace('/', '_')
+                        filename = img_url.split('/')[-1]
                         with open(os.path.join('images', filename), 'wb') as handler:
                             handler.write(img_data)
                         images.append(dict(url=img_url, filename=filename))
