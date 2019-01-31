@@ -4,11 +4,16 @@ from tqdm import tqdm
 import requests
 import os
 import re
+import xlsxwriter
+import signal
 
 
 class AlibabaSelenium(SeleniumHelper):
 
-    def __init__(self, driver_path, request_delay, wait_time, timeout, proxy, headless):
+    def __init__(self, driver_path, request_delay, wait_time, timeout, proxy, headless, outfile):
+
+        self.workbook = xlsxwriter.Workbook(outfile)
+
         SeleniumHelper.WAIT = wait_time
         SeleniumHelper.TIMEOUT = timeout
         SeleniumHelper.DELAY = request_delay
@@ -17,16 +22,46 @@ class AlibabaSelenium(SeleniumHelper):
                                 proxy=proxy,
                                 headless=headless)
 
-    def crawl(self, store_url, outfile, min_price, max_price):
+        signal.signal(signal.SIGINT, self.exit)
+        signal.signal(signal.SIGTERM, self.exit)
+
+    def exit(self):
+        self.driver.close()
+        self.workbook.close()
+
+    def __del__(self):
+        self.exit()
+
+    def crawl(self, store_url, min_price, max_price, category=None):
         try:
             print('Starting with {}'.format(store_url))
             mobile_url = "{0.scheme}://m.{0.netloc}/".format(urlsplit(store_url))
             self.loadPage(mobile_url)
             product_list_btn = self.waitShowElement(r'li[data-page-name="products"]')
             product_list_btn.click()
+            if category:
+                self.getElement('#refine-btn').click()
+
+                no_err = False
+                for a in self.getElements('#categories-sidebar a'):
+                    if self.getValue(a) == category:
+                        href = self.getAttribute(a, 'href')
+                        a.click()
+                        if not href:
+                            a = self.getElementFrom(a.find_element_by_xpath('..'), 'ul li:last-child a')
+                            a.click()
+                        no_err = True
+                        break
+                assert no_err
         except:
             print("Can't crawl {}".format(store_url))
             return
+
+        worksheet = self.workbook.add_worksheet(
+            name='{} - {}'.format(re.search(r'.*?\/\/(.*?)\.', store_url).group(1), category))
+        worksheet.set_default_row(120)
+        worksheet.set_column('A:B', 40)
+        worksheet.set_column('C:Z', 20)
 
         def get_item(url):
             try:
@@ -44,12 +79,13 @@ class AlibabaSelenium(SeleniumHelper):
                     except:
                         pass
                 description = self.getElementValue('.product-title h1')
-                price = self.getElementValue('.price')
+                price = self.getElementValue('.price-ladder')
             except:
                 return None
             return dict(images=images, description=description, price=price, url=url)
 
-        def get_items_urls(page_num=1):
+        def get_items_urls(page_num=1, current_row=1):
+
             try:
                 print('Crawl to product list page number {}'.format(page_num))
                 self.waitShowElement('.item.clearfix:last-child ul.params li.param:last-child span')
@@ -72,15 +108,28 @@ class AlibabaSelenium(SeleniumHelper):
                         if price >= min_price and price <= max_price:
                             item = get_item(url['href'])
                             if item:
-                                img_data = ';'.join(
-                                    ['{};{}'.format(img['url'], img['filename']) for img in item['images']])
-                                row = '{};{};{};{};{}\n'.format(store_url, item['url'], item['description'],
-                                                                item['price'], img_data)
-                                open(outfile, 'a').write(row)
+                                worksheet.write('A{}'.format(current_row), item['url'])
+                                worksheet.write('B{}'.format(current_row), item['description'])
+                                worksheet.write('C{}'.format(current_row), item['price'])
+
+                                char = 'D'
+                                for img in item['images']:
+                                    worksheet.insert_image('{}{}'.format(char, current_row),
+                                                           os.path.join('images', img['filename']),
+                                                           {
+                                                               'url': item['url'],
+                                                               'x_scale': 1 / 7,
+                                                               'y_scale': 1 / 7,
+                                                               'x_offset': 5,
+                                                               'y_offset': 5
+                                                           })
+                                    char = chr(ord(char) + 1)
+
+                                current_row += 1
 
                 if next_page is not None:
                     self.loadPage(next_page)
-                    get_items_urls(page_num + 1)
+                    get_items_urls(page_num + 1, current_row)
             except:
                 pass
 

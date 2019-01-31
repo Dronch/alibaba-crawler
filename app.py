@@ -1,6 +1,7 @@
 import configparser
 from SeleniumTools import AlibabaSelenium
 
+
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -10,17 +11,15 @@ if __name__ == '__main__':
                               wait_time=int(config['CRAWLER']['read_timeout']),
                               timeout=int(config['CRAWLER']['connect_timeout']),
                               proxy={'proxy': config['CRAWLER']['proxy'], 'credentials': ''},
-                              headless=True if str(config['CRAWLER']['headless']).lower() == 'true' else False)
-
-    filename = config['MAIN']['output']
-    out = open(filename, 'w')
-    out.write('store;url;description;price\n')
-    out.close()
+                              headless=True if str(config['CRAWLER']['headless']).lower() == 'true' else False,
+                              outfile=config['MAIN']['output'])
 
     min_price = float(config['MAIN']['min_price'])
     max_price = float(config['MAIN']['max_price'])
 
     assert min_price < max_price, 'Min price is greater than max price, fix config'
-
     for url in open(config['MAIN']['input']).read().splitlines():
-        items = crawler.crawl(url, filename, min_price, max_price)
+        category = config['MAIN']['categoriy']
+        category = None if category == '' else category
+        crawler.crawl(url, min_price, max_price, category)
+    del crawler

@@ -14,7 +14,8 @@ Alibaba selenium crawler
 4. Run CMD and go to crawler folder ``cd C:/path/to/alibaba-crawler``. Run ``pip install -r requirements.txt``
 5. Edit config.ini file ``[CRAWLER]`` section. Set ``driver_path = <path to your geckodriver.exe>`` (You can just copy and paste geckodriver.exe into crawler root folder, so you don't need to edit driver_path field in config.ini). 
 If you want to use proxy, set ``proxy = https://host:port``.
-6. Edit config.ini file ``[MAIN]`` section. ``min_price``, ``max_price`` - filter params. ``input``, ``output`` - input and output files.
+6. Edit config.ini file ``[MAIN]`` section. ``min_price``, ``max_price`` - filter params. ``input``, ``output`` - input and output files. Select category at ``category`` section.
+If category is empty, then all products will be crawled.
 
 ## Usage
 
