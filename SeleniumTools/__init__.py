@@ -69,8 +69,7 @@ class AlibabaSelenium(SeleniumHelper):
                 images = []
                 for img in self.getElements('.slide img'):
                     try:
-                        img_url = self.getAttribute(img, 'data-src')\
-                            .replace('_640x640xz.jpg', '').replace('_640x640xz.png', '')
+                        img_url = self.getAttribute(img, 'data-src')
                         response = requests.get(img_url, proxies=self.proxies) if self.proxy else requests.get(img_url)
                         img_data = response.content
                         filename = img_url.split('/')[-1]

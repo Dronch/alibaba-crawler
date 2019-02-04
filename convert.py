@@ -7,7 +7,7 @@ from tqdm import tqdm
 if __name__ == '__main__':
 
     if len(sys.argv) < 3:
-        print('Usage: {} <input.csv> <output.xlsx>')
+        print('Usage: {} <input.csv> <output.xlsx>'.format(sys.argv[0]))
         exit()
 
     items = open(sys.argv[1]).read().splitlines()
@@ -35,8 +35,8 @@ if __name__ == '__main__':
                                    os.path.join('images', img_files[i]),
                                    {
                                        'url': img_urls[i],
-                                       'x_scale': 1 / 7,
-                                       'y_scale': 1 / 7,
+                                       'x_scale': 1 / 5.5,
+                                       'y_scale': 1 / 5.5,
                                        'x_offset': 5,
                                        'y_offset': 5
                                    })
